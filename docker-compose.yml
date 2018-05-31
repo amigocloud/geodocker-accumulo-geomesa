@@ -1,59 +1,117 @@
 version: '2'
+
 services:
-    geoserver:
-        image: quay.io/geodocker/geoserver:latest
-        ports:
-          - 9090:9090
-    hdfs-name:
-        image: quay.io/geodocker/hdfs:0.1
-        command: name
-        environment:
-          HADOOP_MASTER_ADDRESS: hdfs-name
-        ports:
-          - 50070:50070
-        # volumes:
-        #   - '/data/gt/hdfs:/data/hdfs'
-    hdfs-data:
-        image: quay.io/geodocker/hdfs:0.1
-        command: data
-        environment:
-          HADOOP_MASTER_ADDRESS: hdfs-name
-        depends_on:
-          - hdfs-name
-        # volumes:
-        #  - '/data/gt/hdfs:/data/hdfs'
-    zookeeper:
-        image: quay.io/geodocker/zookeeper:latest
-        ports:
-          - 2181:2181
-        #  volumes:
-        #   - '/data/gt/hdfs:/data/hdfs'
     accumulo-master:
       image: quay.io/geodocker/accumulo-geomesa:latest
+      restart: always
       command: master --auto-init
       environment:
-        HADOOP_MASTER_ADDRESS: hdfs-name
-        ZOOKEEPERS: zookeeper
-        ACCUMULO_PASSWORD: GisPwd
-      depends_on:
-        - zookeeper
+        HADOOP_USER_NAME: hdfs
+        HADOOP_MASTER_ADDRESS: gold-1.amigocloud.com
+        ZOOKEEPERS: gold-1.amigocloud.com
+        INSTANCE_NAME: accumulo5
+        ACCUMULO_PASSWORD: lionstone
+        MASTER_XMX: 32G
+      network_mode: "host"
+#      networks:
+#        - geobridge
+
     accumulo-monitor:
-        image: quay.io/geodocker/accumulo-geomesa:latest
-        command: monitor
-        environment:
-          HADOOP_MASTER_ADDRESS: hdfs-name
-          ZOOKEEPERS: zookeeper
-        ports:
-          - 50095:50095
-        depends_on:
-          - zookeeper
-          - accumulo-master
+      image: quay.io/geodocker/accumulo-geomesa:latest
+      command: monitor
+      restart: always
+      environment:
+        HADOOP_USER_NAME: hdfs
+        HADOOP_MASTER_ADDRESS: gold-1.amigocloud.com
+        ZOOKEEPERS: gold-1.amigocloud.com
+        INSTANCE_NAME: accumulo5
+        MONITOR_XMX: 8G
+      ports:
+        - 50095:50095
+      depends_on:
+        - accumulo-master
+      network_mode: "host"
+#      networks:
+#        - geobridge
+
     accumulo-tserver:
         image: quay.io/geodocker/accumulo-geomesa:latest
+        restart: always
         command: tserver
         environment:
-          HADOOP_MASTER_ADDRESS: hdfs-name
-          ZOOKEEPERS: zookeeper
+          HADOOP_USER_NAME: hdfs
+          HADOOP_MASTER_ADDRESS: gold-1.amigocloud.com
+          ZOOKEEPERS: gold-1.amigocloud.com
+          INSTANCE_NAME: accumulo5
+          TSERVER_XMX: 128G
+          TSERVER_CACHE_DATA_SIZE: 32G
+          TSERVER_CACHE_INDEX_SIZE: 32G
         depends_on:
-          - zookeeper
           - accumulo-master
+        volumes:
+          - tserver_data_volume:/opt/accumulo/lib/ext
+        network_mode: "host"
+#        networks:
+#          - geobridge
+
+    accumulo-gc:
+        image: quay.io/geodocker/accumulo-geomesa:latest
+        command: gc
+        environment:
+          HADOOP_USER_NAME: hdfs
+          HADOOP_MASTER_ADDRESS: gold-1.amigocloud.com
+          ZOOKEEPERS: gold-1.amigocloud.com
+          INSTANCE_NAME: accumulo5
+          GC_XMX: 16G
+        depends_on:
+          - accumulo-master
+        network_mode: "host"
+#        networks:
+#          - geobridge
+
+    geoserver1:
+        image: geoserver_amigo:latest
+        #image: geoserver_amigo:fix_attempt_1
+        #image: geoserver_amigo_2_12_1_gm_125_gw_093
+        #image: geoserver_amigo_2_12_1_gm_head_gw_093
+        restart: always
+        depends_on:
+          - accumulo-master
+        ports:
+          - 9091:9090
+        volumes:
+          - geoserver_data_volume3:/opt/tomcat/webapps/geoserver/data
+          - /home/victor:/home/victor
+#        network_mode: "host"
+#        networks:
+#          - geobridge
+
+#    geoserver2:
+#        image: geoserver_amigo:latest
+#        restart: always
+#        ports:
+#          - 9092:9090
+#        volumes:
+#          - geoserver_data_volume3:/opt/tomcat/webapps/geoserver/data
+#          - /home/victor:/mnt
+
+#    geoserver3:
+#        image: geoserver_amigo:latest
+#        restart: always
+#        ports:
+#          - 9093:9090
+#        volumes:
+#          - geoserver_data_volume3:/opt/tomcat/webapps/geoserver/data
+#          - /home/victor:/mnt
+
+volumes:
+  geoserver_data_volume3:
+    external: true
+
+  tserver_data_volume:
+    external: true
+
+#networks:
+#    default:
+#        external: 
+#          name: geobridge 
