@@ -1,0 +1,42 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.13.0 (84fa826)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: geoserver
+  name: geoserver
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: geoserver
+    spec:
+      containers:
+      - image: docker.amigocloud.com/amigocloud/geoserver_amigo:latest
+        name: geoserver
+        ports:
+        - containerPort: 9090
+        resources: {}
+        volumeMounts:
+        - mountPath: /opt/tomcat/webapps/geoserver/data
+          name: geoserver-data-volume
+#        - mountPath: /home/victor
+#          name: geoserver1-claim1
+      restartPolicy: Always
+      imagePullSecrets:
+      - name: regcred
+      volumes:
+      - name: geoserver-data-volume
+        persistentVolumeClaim:
+          claimName: geoserver-data-volume
+ #     - name: geoserver-claim1
+ #       persistentVolumeClaim:
+ #         claimName: geoserver-claim1
+status: {}

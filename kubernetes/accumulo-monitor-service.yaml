@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.13.0 (84fa826)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: accumulo-monitor
+  name: accumulo-monitor
+spec:
+  ports:
+  - name: "50095"
+    port: 50095
+    targetPort: 50095
+  selector:
+    io.kompose.service: accumulo-monitor
+status:
+  loadBalancer: {}

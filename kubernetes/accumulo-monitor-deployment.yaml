@@ -1,0 +1,40 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.13.0 (84fa826)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: accumulo-monitor
+  name: accumulo-monitor
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: accumulo-monitor
+    spec:
+      containers:
+      - args:
+        - monitor
+        env:
+        - name: HADOOP_MASTER_ADDRESS
+          value: gold-1.amigocloud.com
+        - name: HADOOP_USER_NAME
+          value: hdfs
+        - name: INSTANCE_NAME
+          value: accumulo5
+        - name: MONITOR_XMX
+          value: 8G
+        - name: ZOOKEEPERS
+          value: gold-1.amigocloud.com
+        image: quay.io/geodocker/accumulo-geomesa:latest
+        name: accumulo-monitor
+        ports:
+        - containerPort: 50095
+        resources: {}
+      restartPolicy: Always
+status: {}

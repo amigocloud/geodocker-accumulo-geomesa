@@ -1,0 +1,38 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.13.0 (84fa826)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: accumulo-gc
+  name: accumulo-gc
+spec:
+  replicas: 1 
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: accumulo-gc
+    spec:
+      containers:
+      - args:
+        - gc
+        env:
+        - name: GC_XMX
+          value: 16G
+        - name: HADOOP_MASTER_ADDRESS
+          value: gold-1.amigocloud.com
+        - name: HADOOP_USER_NAME
+          value: hdfs
+        - name: INSTANCE_NAME
+          value: accumulo5
+        - name: ZOOKEEPERS
+          value: gold-1.amigocloud.com
+        image: quay.io/geodocker/accumulo-geomesa:latest
+        name: accumulo-gc
+        resources: {}
+      restartPolicy: Always
+status: {}
